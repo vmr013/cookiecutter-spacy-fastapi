@@ -29,7 +29,7 @@ ENT_PROP_MAP = {
 
 class RecordDataRequest(BaseModel):
     text: str
-    language: str = "en"
+    language: str = "ro"
 
 
 class RecordRequest(BaseModel):

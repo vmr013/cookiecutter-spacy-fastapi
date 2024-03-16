@@ -4,21 +4,19 @@
 from collections import defaultdict
 import os
 
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 from fastapi import Body, FastAPI
-from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 import spacy
 import srsly
-import uvicorn
 
-from app.models import (
+from .models import (
     ENT_PROP_MAP,
     RecordsRequest,
     RecordsResponse,
     RecordsEntitiesByTypeResponse,
 )
-from app.spacy_extractor import SpacyExtractor
+from .spacy_extractor import SpacyExtractor
 
 
 app = FastAPI(
@@ -29,9 +27,18 @@ app = FastAPI(
 
 example_request = srsly.read_json("app/data/example_request.json")
 
-nlp = spacy.load("{{cookiecutter.spacy_model}}")
-extractor = SpacyExtractor(nlp)
-
+@app.on_event("startup")
+def startup():
+    global extractor
+    load_dotenv()
+    model_name = os.getenv('SPACY_MODEL')
+    try:
+        nlp = spacy.load(model_name)
+    except Exception:
+        spacy.cli.download(model_name)
+    finally:
+        nlp = spacy.load(model_name)
+    extractor = SpacyExtractor(nlp)
 
 @app.get("/", include_in_schema=False)
 def docs_redirect():
